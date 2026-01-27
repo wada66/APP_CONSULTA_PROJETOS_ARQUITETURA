@@ -1,210 +1,427 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="projetos-container">
-    <div class="page-header">
-        <h2>Consulta de Projetos</h2>
-        <a href="{{ url_for('index') }}" class="btn btn-secondary">← Voltar</a>
+<div class="container-fluid py-4">
+    <!-- Cabeçalho -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="fw-bold mb-1">
+                        <i class="fas fa-search text-primary me-2"></i>Consulta de Projetos
+                    </h2>
+                    <p class="text-muted mb-0">Use os filtros abaixo para encontrar projetos específicos</p>
+                </div>
+                <a href="{{ url_for('index') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left me-2"></i>Voltar
+                </a>
+            </div>
+        </div>
     </div>
-    
-    <!-- Filtros -->
-    <div class="filtros-section">
-        <h3 class="filtros-title">🔍 FILTROS:</h3>
-        
-        <form method="GET" action="{{ url_for('listar_projetos') }}" class="filtros-form">
-            <div class="filtros-grid">
-                <!-- Linha 1 -->
-                <div class="filtro-group">
-                    <label>ID do Projeto:</label>
-                    <input type="number" name="id_projen" value="{{ filtros.get('id_projen', '') }}" 
-                           placeholder="Digite o ID" min="1">
-                </div>
-                
-                <div class="filtro-group">
-                    <label>Nº de Chamada:</label>
-                    <input type="text" name="n_chamada" value="{{ filtros.get('n_chamada', '') }}" 
-                           placeholder="Número de chamada">
-                </div>
-                
-                <!-- Linha 2 - Título do Projeto e Autor -->
-                <div class="filtro-group full-width">
-                    <label>Título do Projeto:</label>
-                    <input type="text" name="titulo" value="{{ filtros.get('titulo', '') }}" 
-                        placeholder="Digite palavras do título..." style="width: 100%;">
-                </div>
 
-                <!-- Linha: Autor com seleção de tipo -->
-                <div class="filtro-group autor-completo">
-                    <label>Autor:</label>
-                    
-                    <!-- Container para os dois selects lado a lado -->
-                    <div class="autor-dual-select">
-                        <!-- Select do Autor -->
-                        <select name="autor_id" class="select2-autor autor-select">
-                            <option value="">Selecione um autor...</option>
-                            {% for autor in autores %}
-                            <option value="{{ autor.id_autor }}" 
-                                    data-tipo="{{ autor.tipo_autor }}"
-                                    {% if filtros.get('autor_id')|string == autor.id_autor|string %}selected{% endif %}>
-                                {{ autor.nome_autor }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                        
-                        <!-- Select do Tipo (menor) -->
-                        <select name="autor_tipo" class="tipo-select" 
-                                {% if not filtros.get('autor_id') %}disabled{% endif %}>
-                            <option value="todos" {% if filtros.get('autor_tipo', 'todos') == 'todos' %}selected{% endif %}>
-                                Todos os tipos
-                            </option>
-                            <option value="primario" {% if filtros.get('autor_tipo') == 'primario' %}selected{% endif %}>
-                                Apenas Primário
-                            </option>
-                            <option value="secundario" {% if filtros.get('autor_tipo') == 'secundario' %}selected{% endif %}>
-                                Apenas Secundário
-                            </option>
-                        </select>
-                    </div>
-                    
-                    <!-- Mensagem de ajuda -->
-                    <small class="help-text">
-                        Selecione um autor e escolha o tipo (opcional)
-                    </small>
-                </div>
-                
-                <!-- Linha 3 - Local e Data -->
-                <div class="filtro-group">
-                    <label>Local:</label>
-                    <select name="local_id">
-                        <option value="">Todos os locais...</option>
-                        {% for local in locais %}
-                        <option value="{{ local.id_local }}" 
-                                {% if filtros.get('local_id')|string == local.id_local|string %}selected{% endif %}>
-                            {{ local.nome_local }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="filtro-group">
-                    <label>Data (Mês/Ano):</label>
-                    <div class="date-inputs">
-                        <input type="number" name="mes" value="{{ filtros.get('mes', '') }}" 
-                               placeholder="Mês (1-12)" min="1" max="12">
-                        <input type="number" name="ano" value="{{ filtros.get('ano', '') }}" 
-                               placeholder="Ano" min="1900" max="2100">
-                    </div>
-                </div>
-                
-                <!-- Linha 4 - Conteúdo e Executor -->
-                <div class="filtro-group">
-                    <label>Conteúdo:</label>
-                    <select name="conteudo" class="select2-conteudo">
-                        <option value="">Selecione um conteúdo...</option>
-                        {% for conteudo in conteudos %}
-                        <option value="{{ conteudo }}" 
-                                {% if filtros.get('conteudo') == conteudo %}selected{% endif %}>
-                            {{ conteudo[:50] }}{% if conteudo|length > 50 %}...{% endif %}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="filtro-group">
-                    <label>Executor:</label>
-                    <select name="executor_id">
-                        <option value="">Todos os executores...</option>
-                        {% for executor in executores %}
-                        <option value="{{ executor.id_executor }}" 
-                                {% if filtros.get('executor_id')|string == executor.id_executor|string %}selected{% endif %}>
-                            {{ executor.nome_executor }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <!-- Linha 5 - Assunto e Setor -->
-                <div class="filtro-group">
-                    <label>Assunto:</label>
-                    <select name="assunto_id">
-                        <option value="">Todos os assuntos...</option>
-                        {% for assunto in assuntos %}
-                        <option value="{{ assunto.id_assunto }}" 
-                                {% if filtros.get('assunto_id')|string == assunto.id_assunto|string %}selected{% endif %}>
-                            {{ assunto.nome_assunto }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="filtro-group">
-                    <label>Setor:</label>
-                    <select name="setor_id">
-                        <option value="">Todos os setores...</option>
-                        {% for setor in setores %}
-                        <option value="{{ setor.id_setor }}" 
-                                {% if filtros.get('setor_id')|string == setor.id_setor|string %}selected{% endif %}>
-                            {{ setor.nome_setor }}
-                        </option>
-                        {% endfor %}
-                    </select>
-                </div>
-            </div>
-            
-            <div class="form-buttons">
-                <button type="submit" class="btn btn-primary">Aplicar Filtros</button>
-                <a href="{{ url_for('listar_projetos') }}" class="btn btn-secondary">Limpar Filtros</a>
-            </div>
-        </form>
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+        <p class="mt-3">Buscando projetos...</p>
     </div>
-    
-    <!-- Resultados -->
-    <div class="resultados-section">
-        <h3>Resultados ({{ projetos|length }} projetos encontrados)</h3>
-        
-        {% if projetos %}
-        <div class="projetos-list">
-            {% for projeto in projetos %}
-            <div class="projeto-card">
-                <div class="projeto-header">
-                    <h4>#{{ projeto.id_projen }} - {{ projeto.titulo_projen }}</h4>
-                    <span class="projeto-chamada">{{ projeto.n_chamada_projen }}</span>
+
+    <!-- Filtros em Accordion -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-filter me-2"></i>Filtros de Busca
+                    </h5>
+                    <span class="badge bg-light text-dark">{{ projetos|length }} resultados</span>
                 </div>
-                
-                <div class="projeto-details">
-                    <p><strong>Data:</strong> {{ projeto.data_projen.strftime('%d/%m/%Y') if projeto.data_projen else 'N/A' }}</p>
-                    <p><strong>Local:</strong> {{ projeto.local.nome_local if projeto.local else 'N/A' }}</p>
-                    <p><strong>Setor:</strong> {{ projeto.setor.nome_setor if projeto.setor else 'N/A' }}</p>
-                    
-                    <div class="projeto-tags">
-                        {% if projeto.autores %}
-                        <span class="tag">👥 Autores: {{ projeto.autores|map(attribute='nome_autor')|join(', ') }}</span>
-                        {% endif %}
-                        {% if projeto.assuntos %}
-                        <span class="tag">🏷️ Assuntos: {{ projeto.assuntos|map(attribute='nome_assunto')|join(', ') }}</span>
-                        {% endif %}
-                        {% if projeto.executores %}
-                        <span class="tag">🛠️ Executores: {{ projeto.executores|map(attribute='nome_executor')|join(', ') }}</span>
-                        {% endif %}
-                    </div>
-                    
-                    <p class="projeto-conteudo">
-                        <strong>Conteúdo:</strong> 
-                        {% if projeto.conteudo_projen %}
-                            {{ projeto.conteudo_projen[:200] }}{% if projeto.conteudo_projen|length > 200 %}...{% endif %}
-                        {% else %}
-                            Não disponível
-                        {% endif %}
-                    </p>
+                <div class="card-body">
+                    <form method="GET" action="{{ url_for('listar_projetos') }}" id="filtrosForm" onsubmit="showLoading()">
+                        <div class="row">
+                            <!-- Busca Rápida -->
+                            <div class="col-12 mb-4">
+                                <div class="filtro-group">
+                                    <label for="titulo">
+                                        <i class="fas fa-heading"></i> Busca Rápida por Título
+                                    </label>
+                                    <div class="input-group">
+                                        <input type="text" 
+                                               class="form-control form-control-custom" 
+                                               id="titulo" 
+                                               name="titulo" 
+                                               value="{{ filtros.get('titulo', '') }}"
+                                               placeholder="Digite palavras do título (ex: ponte, escola, hospital)..."
+                                               aria-label="Busca por título">
+                                        <button class="btn btn-primary-custom" type="submit">
+                                            <i class="fas fa-search"></i> Buscar
+                                        </button>
+                                    </div>
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-info-circle"></i> A busca é case-insensitive e ignora acentos
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Filtros Avançados -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="id_projen"><i class="fas fa-hashtag"></i> ID do Projeto</label>
+                                    <input type="number" 
+                                           class="form-control form-control-custom" 
+                                           id="id_projen" 
+                                           name="id_projen" 
+                                           value="{{ filtros.get('id_projen', '') }}"
+                                           placeholder="Digite o ID" 
+                                           min="1">
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="n_chamada"><i class="fas fa-file-alt"></i> Nº de Chamada</label>
+                                    <input type="text" 
+                                           class="form-control form-control-custom" 
+                                           id="n_chamada" 
+                                           name="n_chamada" 
+                                           value="{{ filtros.get('n_chamada', '') }}"
+                                           placeholder="Número de chamada">
+                                </div>
+                            </div>
+
+                            <!-- Autor com Tipo -->
+                            <div class="col-12">
+                                <div class="filtro-group autor-completo">
+                                    <label><i class="fas fa-user-edit"></i> Autor</label>
+                                    <div class="autor-dual-select">
+                                        <select name="autor_id" class="select2-custom select2-autor" style="width: 100%;">
+                                            <option value="">Selecione um autor...</option>
+                                            {% for autor in autores %}
+                                            <option value="{{ autor.id_autor }}" 
+                                                    data-tipo="{{ autor.tipo_autor }}"
+                                                    {% if filtros.get('autor_id')|string == autor.id_autor|string %}selected{% endif %}>
+                                                {{ autor.nome_autor }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                        
+                                        <select name="autor_tipo" class="form-control form-control-custom tipo-select" 
+                                                {% if not filtros.get('autor_id') %}disabled{% endif %}>
+                                            <option value="todos" {% if filtros.get('autor_tipo', 'todos') == 'todos' %}selected{% endif %}>
+                                                Todos os tipos
+                                            </option>
+                                            <option value="primario" {% if filtros.get('autor_tipo') == 'primario' %}selected{% endif %}>
+                                                Apenas Primário
+                                            </option>
+                                            <option value="secundario" {% if filtros.get('autor_tipo') == 'secundario' %}selected{% endif %}>
+                                                Apenas Secundário
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <small class="help-text text-muted">
+                                        <i class="fas fa-info-circle"></i> Selecione um autor e escolha o tipo (opcional)
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Local e Data -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="local_id"><i class="fas fa-map-marker-alt"></i> Local</label>
+                                    <select name="local_id" class="form-control form-control-custom">
+                                        <option value="">Todos os locais...</option>
+                                        {% for local in locais %}
+                                        <option value="{{ local.id_local }}" 
+                                                {% if filtros.get('local_id')|string == local.id_local|string %}selected{% endif %}>
+                                            {{ local.nome_local }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label><i class="fas fa-calendar-alt"></i> Data (Mês/Ano)</label>
+                                    <div class="row g-2">
+                                        <div class="col-6">
+                                            <input type="number" 
+                                                   class="form-control form-control-custom" 
+                                                   name="mes" 
+                                                   value="{{ filtros.get('mes', '') }}" 
+                                                   placeholder="Mês (1-12)" 
+                                                   min="1" 
+                                                   max="12">
+                                        </div>
+                                        <div class="col-6">
+                                            <input type="number" 
+                                                   class="form-control form-control-custom" 
+                                                   name="ano" 
+                                                   value="{{ filtros.get('ano', '') }}" 
+                                                   placeholder="Ano" 
+                                                   min="1900" 
+                                                   max="2100">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Conteúdo e Executor -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="conteudo"><i class="fas fa-file-text"></i> Conteúdo</label>
+                                    <select name="conteudo" class="select2-custom select2-conteudo" style="width: 100%;">
+                                        <option value="">Selecione um conteúdo...</option>
+                                        {% for conteudo in conteudos %}
+                                        <option value="{{ conteudo }}" 
+                                                {% if filtros.get('conteudo') == conteudo %}selected{% endif %}>
+                                            {{ conteudo[:50] }}{% if conteudo|length > 50 %}...{% endif %}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="executor_id"><i class="fas fa-tools"></i> Executor</label>
+                                    <select name="executor_id" class="form-control form-control-custom">
+                                        <option value="">Todos os executores...</option>
+                                        {% for executor in executores %}
+                                        <option value="{{ executor.id_executor }}" 
+                                                {% if filtros.get('executor_id')|string == executor.id_executor|string %}selected{% endif %}>
+                                            {{ executor.nome_executor }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Assunto e Setor -->
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="assunto_id"><i class="fas fa-tags"></i> Assunto</label>
+                                    <select name="assunto_id" class="form-control form-control-custom">
+                                        <option value="">Todos os assuntos...</option>
+                                        {% for assunto in assuntos %}
+                                        <option value="{{ assunto.id_assunto }}" 
+                                                {% if filtros.get('assunto_id')|string == assunto.id_assunto|string %}selected{% endif %}>
+                                            {{ assunto.nome_assunto }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="filtro-group">
+                                    <label for="setor_id"><i class="fas fa-building"></i> Setor</label>
+                                    <select name="setor_id" class="form-control form-control-custom">
+                                        <option value="">Todos os setores...</option>
+                                        {% for setor in setores %}
+                                        <option value="{{ setor.id_setor }}" 
+                                                {% if filtros.get('setor_id')|string == setor.id_setor|string %}selected{% endif %}>
+                                            {{ setor.nome_setor }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Botões de Ação -->
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <button type="submit" class="btn btn-primary-custom me-2">
+                                            <i class="fas fa-search me-1"></i> Aplicar Filtros
+                                        </button>
+                                        <a href="{{ url_for('listar_projetos') }}" class="btn btn-outline-secondary">
+                                            <i class="fas fa-redo me-1"></i> Limpar Filtros
+                                        </a>
+                                    </div>
+                                    
+                                    <div>
+                                        <button type="button" class="btn btn-outline-success" onclick="exportarResultados()">
+                                            <i class="fas fa-download me-1"></i> Exportar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-            {% endfor %}
         </div>
-        {% else %}
-        <div class="no-results">
-            <p>Nenhum projeto encontrado com os filtros aplicados.</p>
+    </div>
+
+    <!-- Resultados -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card-modern">
+                <div class="card-header-modern d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="fas fa-list-alt me-2"></i>Resultados da Busca
+                        <span class="badge bg-light text-dark ms-2">{{ projetos|length }}</span>
+                    </h5>
+                    
+                    {% if filtros %}
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-3">
+                            <i class="fas fa-filter me-1"></i>Filtros aplicados
+                        </small>
+                        {% for key, value in filtros.items() %}
+                        <span class="badge bg-info me-1">{{ key }}: {{ value }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    {% if projetos %}
+                    <div class="projetos-list">
+                        {% for projeto in projetos %}
+                        <div class="projeto-card-modern">
+                            <div class="projeto-header-modern">
+                                <div>
+                                    <h4 class="mb-0">#{{ projeto.id_projen }} - {{ projeto.titulo_projen or '(Sem título)' }}</h4>
+                                    <div class="d-flex align-items-center mt-1">
+                                        <span class="projeto-chamada-modern me-3">
+                                            <i class="fas fa-file-alt me-1"></i>{{ projeto.n_chamada_projen or 'N/A' }}
+                                        </span>
+                                        {% if projeto.data_projen %}
+                                        <span class="text-muted">
+                                            <i class="fas fa-calendar me-1"></i>{{ projeto.data_projen.strftime('%d/%m/%Y') }}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary" 
+                                        type="button" 
+                                        data-bs-toggle="collapse" 
+                                        data-bs-target="#detalhes{{ projeto.id_projen }}">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="projeto-tags-modern">
+                                {% if projeto.local %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ projeto.local.nome_local }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if projeto.setor %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-building me-1"></i>{{ projeto.setor.nome_setor }}
+                                </span>
+                                {% endif %}
+                                
+                                {% if projeto.autores %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-users me-1"></i>{{ projeto.autores|length }} autor(es)
+                                </span>
+                                {% endif %}
+                                
+                                {% if projeto.assuntos %}
+                                <span class="tag-modern">
+                                    <i class="fas fa-tags me-1"></i>{{ projeto.assuntos|length }} assunto(s)
+                                </span>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Conteúdo resumido -->
+                            {% if projeto.conteudo_projen %}
+                            <p class="mb-2">
+                                <strong><i class="fas fa-align-left me-1"></i>Conteúdo:</strong> 
+                                {{ projeto.conteudo_projen[:150] }}{% if projeto.conteudo_projen|length > 150 %}...{% endif %}
+                            </p>
+                            {% endif %}
+                            
+                            <!-- Detalhes expandíveis -->
+                            <div class="collapse mt-3" id="detalhes{{ projeto.id_projen }}">
+                                <div class="card card-body border-0 bg-light">
+                                    <h6><i class="fas fa-info-circle me-1"></i>Detalhes Completos</h6>
+                                    
+                                    <div class="row mt-2">
+                                        {% if projeto.autores %}
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Autores:</strong></p>
+                                            <ul class="list-unstyled">
+                                                {% for autor in projeto.autores %}
+                                                <li>
+                                                    <i class="fas fa-user me-1"></i>{{ autor.nome_autor }} 
+                                                    <span class="badge bg-secondary">{{ autor.tipo_autor }}</span>
+                                                </li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if projeto.assuntos %}
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Assuntos:</strong></p>
+                                            <ul class="list-unstyled">
+                                                {% for assunto in projeto.assuntos %}
+                                                <li><i class="fas fa-tag me-1"></i>{{ assunto.nome_assunto }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if projeto.executores %}
+                                        <div class="col-md-6">
+                                            <p class="mb-1"><strong>Executores:</strong></p>
+                                            <ul class="list-unstyled">
+                                                {% for executor in projeto.executores %}
+                                                <li><i class="fas fa-toolbox me-1"></i>{{ executor.nome_executor }}</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        {% if projeto.notas_gerais_projen %}
+                                        <div class="col-12">
+                                            <p class="mb-1"><strong>Notas Gerais:</strong></p>
+                                            <p class="mb-0">{{ projeto.notas_gerais_projen }}</p>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-search fa-4x text-muted mb-3"></i>
+                        <h4 class="text-muted">Nenhum projeto encontrado</h4>
+                        <p class="text-muted">Tente ajustar os filtros da sua busca</p>
+                        <a href="{{ url_for('listar_projetos') }}" class="btn btn-primary-custom mt-2">
+                            <i class="fas fa-redo me-1"></i> Limpar Filtros
+                        </a>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Paginação (se tiver muitos resultados) -->
+                    {% if projetos|length > 20 %}
+                    <nav aria-label="Paginação de resultados" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            <li class="page-item disabled">
+                                <a class="page-link" href="#" tabindex="-1">Anterior</a>
+                            </li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li>
+                            <li class="page-item">
+                                <a class="page-link" href="#">Próxima</a>
+                            </li>
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
         </div>
-        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -212,44 +429,16 @@
 {% block scripts %}
 <script>
 $(document).ready(function() {
-    // Inicializar Select2 para autores
-    $('.select2-autor').select2({
-        placeholder: "Selecione um autor...",
+    // Inicializar Select2 com tema Bootstrap 5
+    $('.select2-autor, .select2-conteudo').select2({
+        theme: 'bootstrap-5',
+        placeholder: "Selecione...",
         allowClear: true,
         language: "pt-BR",
         width: '100%'
     });
     
-    // Inicializar Select2 para conteúdos
-    $('.select2-conteudo').select2({
-        placeholder: "Selecione um conteúdo...",
-        allowClear: true,
-        language: "pt-BR",
-        width: '100%'
-    });
-});
-</script>
-<script>
-$(document).ready(function() {
-    // ========== CÓDIGO EXISTENTE ==========
-    // Inicializar Select2 para autores
-    $('.select2-autor').select2({
-        placeholder: "Selecione um autor...",
-        allowClear: true,
-        language: "pt-BR",
-        width: '100%'
-    });
-    
-    // Inicializar Select2 para conteúdos
-    $('.select2-conteudo').select2({
-        placeholder: "Selecione um conteúdo...",
-        allowClear: true,
-        language: "pt-BR",
-        width: '100%'
-    });
-    
-    // ========== NOVO CÓDIGO PARA AUTORES ==========
-    // Lógica para habilitar/desabilitar o select de tipo
+    // Lógica para habilitar/desabilitar o select de tipo de autor
     const autorSelect = $('select[name="autor_id"]');
     const tipoSelect = $('select[name="autor_tipo"]');
     
@@ -262,19 +451,31 @@ $(document).ready(function() {
     autorSelect.on('change', function() {
         if ($(this).val()) {
             tipoSelect.prop('disabled', false);
-            
-            // Mostrar o tipo do autor selecionado como sugestão
-            const selectedOption = $(this).find('option:selected');
-            const autorTipo = selectedOption.data('tipo');
-            
-            if (autorTipo) {
-                // Mostrar tooltip (opcional)
-                tipoSelect.attr('title', `Este autor é do tipo: ${autorTipo}`);
-            }
         } else {
             tipoSelect.prop('disabled', true);
             tipoSelect.val('todos');
         }
+    });
+    
+    // Mostrar loading durante a busca
+    window.showLoading = function() {
+        $('#loadingSpinner').fadeIn();
+    }
+    
+    // Esconder loading quando a página carregar
+    $(window).on('load', function() {
+        $('#loadingSpinner').fadeOut();
+    });
+    
+    // Função para exportar resultados
+    window.exportarResultados = function() {
+        alert('Funcionalidade de exportação será implementada em breve!');
+        // Aqui você pode implementar exportação para CSV/Excel
+    }
+    
+    // Animar cards quando aparecem na tela
+    $('.projeto-card-modern').each(function(i) {
+        $(this).delay(i * 100).animate({ opacity: 1 }, 500);
     });
 });
 </script>

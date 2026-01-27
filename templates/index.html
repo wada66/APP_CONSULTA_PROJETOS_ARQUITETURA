@@ -1,21 +1,142 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="home-container">
-    <div class="welcome-message">
-        <h2>Bem-vindo ao Sistema de Consulta de Projetos</h2>
-        <p>Navegue pelos projetos de engenharia usando os filtros disponíveis.</p>
+<div class="container py-5">
+    <!-- Hero Section -->
+    <div class="row align-items-center mb-5">
+        <div class="col-lg-6">
+            <h1 class="display-4 fw-bold mb-4">
+                <span class="text-primary">Consulta Inteligente</span> de Projetos
+            </h1>
+            <p class="lead mb-4">
+                Sistema avançado para busca e análise de projetos de engenharia e arquitetura. 
+                Encontre rapidamente o que precisa com filtros poderosos e interface intuitiva.
+            </p>
+            <div class="d-flex gap-3">
+                <a href="{{ url_for('listar_projetos') }}" class="btn btn-primary-custom btn-lg">
+                    <i class="fas fa-search me-2"></i> Consultar Projetos
+                </a>
+                <a href="#" class="btn btn-outline-primary btn-lg">
+                    <i class="fas fa-chart-line me-2"></i> Ver Estatísticas
+                </a>
+            </div>
+        </div>
+        <div class="col-lg-6">
+            <div class="card-modern p-4">
+                <div class="text-center">
+                    <i class="fas fa-drafting-compass text-primary" style="font-size: 8rem;"></i>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div class="actions">
-        <a href="{{ url_for('listar_projetos') }}" class="btn btn-primary btn-large">
-            📋 Listar Todos os Projetos
-        </a>
+
+    <!-- Estatísticas -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4 text-center">📊 Visão Geral do Sistema</h2>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_projetos }}</div>
+                <div class="stats-label">Projetos Cadastrados</div>
+                <i class="fas fa-project-diagram text-primary mt-3" style="font-size: 2rem;"></i>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ autores_total if autores_total else '150+' }}</div>
+                <div class="stats-label">Autores</div>
+                <i class="fas fa-users text-primary mt-3" style="font-size: 2rem;"></i>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ locais_total if locais_total else '50+' }}</div>
+                <div class="stats-label">Locais Diferentes</div>
+                <i class="fas fa-map-marker-alt text-primary mt-3" style="font-size: 2rem;"></i>
+            </div>
+        </div>
+        
+        <div class="col-md-3 mb-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ setores_total if setores_total else '20+' }}</div>
+                <div class="stats-label">Setores</div>
+                <i class="fas fa-building text-primary mt-3" style="font-size: 2rem;"></i>
+            </div>
+        </div>
     </div>
-    
-    <div class="info-box">
-        <p><strong>Total de Projetos:</strong> {{ total_projetos }}</p>
-        <p>Use os filtros para encontrar projetos específicos por autor, local, data, assunto, etc.</p>
+
+    <!-- Funcionalidades -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <h2 class="mb-4 text-center">🚀 Funcionalidades Principais</h2>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card-modern p-4 text-center h-100">
+                <div class="mb-3">
+                    <i class="fas fa-filter text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h4>Filtros Avançados</h4>
+                <p>Busque por título, autor, local, data, conteúdo e muito mais com filtros combinados.</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card-modern p-4 text-center h-100">
+                <div class="mb-3">
+                    <i class="fas fa-search text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h4>Busca Inteligente</h4>
+                <p>Encontre projetos mesmo digitando sem acentos ou com maiúsculas/minúsculas diferentes.</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-4">
+            <div class="card-modern p-4 text-center h-100">
+                <div class="mb-3">
+                    <i class="fas fa-chart-pie text-primary" style="font-size: 3rem;"></i>
+                </div>
+                <h4>Análise de Dados</h4>
+                <p>Visualize estatísticas e tendências dos seus projetos de engenharia.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card-modern p-5 text-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <h2 class="mb-3">Pronto para começar?</h2>
+                <p class="mb-4">Explore nossa base de projetos com a ferramenta mais completa do mercado.</p>
+                <a href="{{ url_for('listar_projetos') }}" class="btn btn-light btn-lg">
+                    <i class="fas fa-rocket me-2"></i> Iniciar Consulta
+                </a>
+            </div>
+        </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Adicionar estatísticas dinâmicas (se não vierem do backend)
+    document.addEventListener('DOMContentLoaded', function() {
+        // Se não tiver estatísticas do backend, podemos calcular
+        if (!{{ total_projetos|default(0) }}) {
+            // Exemplo: fazer requisição para API de estatísticas
+            fetch('/api/estatisticas')
+                .then(response => response.json())
+                .then(data => {
+                    // Atualizar os números
+                    document.querySelectorAll('.stats-number')[0].textContent = data.total_projetos;
+                    // ... etc
+                })
+                .catch(error => console.error('Erro ao carregar estatísticas:', error));
+        }
+    });
+</script>
 {% endblock %}

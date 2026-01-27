@@ -105,7 +105,7 @@ header h1 {
 .filtros-section {
     background-color: white;
     border-radius: 8px;
-    padding: 25px;
+    padding: 35px;
     margin-bottom: 30px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
@@ -161,7 +161,7 @@ header h1 {
 .resultados-section {
     background-color: white;
     border-radius: 8px;
-    padding: 25px;
+    padding: 35px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -179,7 +179,7 @@ header h1 {
 .projeto-card {
     border: 1px solid #ddd;
     border-radius: 8px;
-    padding: 20px;
+    padding: 25px;
     transition: box-shadow 0.3s;
 }
 
@@ -316,4 +316,75 @@ header h1 {
     margin-top: 5px;
     color: #6c757d;
     font-size: 0.875em;
+}
+/* Efeitos de transição suave */
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Efeito de shimmer para cards */
+.shimmer {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+}
+
+/* Badges animados */
+.badge-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0.7); }
+    70% { box-shadow: 0 0 0 10px rgba(52, 152, 219, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(52, 152, 219, 0); }
+}
+
+/* Scrollbar personalizada */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--secondary-color);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #2980b9;
+}
+
+/* Efeito de gradiente animado no header */
+.gradient-animated {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+}
+
+@keyframes gradient {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Tooltips customizados */
+.custom-tooltip {
+    --bs-tooltip-bg: var(--primary-color);
+    --bs-tooltip-color: white;
 }
