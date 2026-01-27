@@ -1,3 +1,4 @@
+import re
 from flask import Flask, render_template, request, jsonify
 from config import Config
 from models import ProjenAutor, db, Projen, Setor, Local, Assunto, Executor, Autor, AreaGeografica
@@ -145,38 +146,84 @@ def listar_projetos():
         except ValueError:
             pass
         
-        # Filtro por Título do Projeto (NOVO!)
+    # Filtro por Título - SOLUÇÃO SIMPLES E FUNCIONAL
     if 'titulo' in request.args and request.args['titulo']:
-        titulo = request.args['titulo'].strip()
-        if titulo:  # Só aplica se não estiver vazio
-            # Busca por LIKE (contém) no título
-            projetos = projetos.filter(Projen.titulo_projen.like(f"%{titulo}%"))
-            filtros['titulo'] = titulo
-            print(f"🔍 Buscando por título contendo: '{titulo}'")
-    
-    # Buscar dados para os selects
-    locais = Local.query.order_by(Local.nome_local).all()
-    setores = Setor.query.order_by(Setor.nome_setor).all()
-    assuntos = Assunto.query.order_by(Assunto.nome_assunto).all()
-    executores = Executor.query.order_by(Executor.nome_executor).all()
-    autores = Autor.query.order_by(Autor.nome_autor).all()
-    
-    # Buscar conteúdos distintos
-    conteudos = db.session.query(Projen.conteudo_projen).distinct().filter(Projen.conteudo_projen.isnot(None)).all()
-    conteudos = [c[0] for c in conteudos if c[0]]
-    
-    projetos = projetos.order_by(Projen.id_projen.desc()).all()
-    
-    return render_template('projetos.html',
-                         projetos=projetos,
-                         locais=locais,
-                         setores=setores,
-                         assuntos=assuntos,
-                         executores=executores,
-                         autores=autores,
-                         conteudos=conteudos,
-                         filtros=filtros,
-                         datetime=datetime)
+        titulo_busca = request.args['titulo'].strip()
+        if titulo_busca:
+            print(f"\n🔍 BUSCANDO: '{titulo_busca}'")
+            
+            # Método: buscar de forma "aproximada"
+            # Vamos transformar a busca em um padrão de regex-like
+            
+            # Primeiro, criar um padrão onde cada vogal pode ter acento
+            def criar_padrao_regex(palavra):
+                """Cria padrão regex onde vogais podem ter acentos"""
+                padrao = ''
+                for letra in palavra:
+                    letra_lower = letra.lower()
+                    if letra_lower == 'a':
+                        padrao += '[aáàãâä]'
+                    elif letra_lower == 'e':
+                        padrao += '[eéèêë]'
+                    elif letra_lower == 'i':
+                        padrao += '[iíìîï]'
+                    elif letra_lower == 'o':
+                        padrao += '[oóòõôö]'
+                    elif letra_lower == 'u':
+                        padrao += '[uúùûü]'
+                    elif letra_lower == 'c':
+                        padrao += '[cç]'
+                    else:
+                        padrao += re.escape(letra)
+                return padrao
+            
+            # Para cada palavra na busca, criar padrão
+            palavras = titulo_busca.split()
+            condicoes = []
+            
+            for palavra in palavras:
+                if len(palavra) >= 2:
+                    # Padrão case-insensitive com acentos
+                    padrao_regex = criar_padrao_regex(palavra)
+                    
+                    # Usar regex do PostgreSQL se disponível
+                    try:
+                        condicoes.append(Projen.titulo_projen.op('~*')(padrao_regex))
+                        print(f"   ✅ Usando regex para: {palavra} → {padrao_regex}")
+                    except:
+                        # Fallback: usar LIKE tradicional
+                        condicoes.append(Projen.titulo_projen.ilike(f"%{palavra}%"))
+                        print(f"   ⚠️  Fallback LIKE para: {palavra}")
+            
+            # Aplicar condições AND (todas palavras devem aparecer)
+            if condicoes:
+                projetos = projetos.filter(*condicoes)
+            
+            filtros['titulo'] = titulo_busca
+            
+            # Buscar dados para os selects
+            locais = Local.query.order_by(Local.nome_local).all()
+            setores = Setor.query.order_by(Setor.nome_setor).all()
+            assuntos = Assunto.query.order_by(Assunto.nome_assunto).all()
+            executores = Executor.query.order_by(Executor.nome_executor).all()
+            autores = Autor.query.order_by(Autor.nome_autor).all()
+            
+            # Buscar conteúdos distintos
+            conteudos = db.session.query(Projen.conteudo_projen).distinct().filter(Projen.conteudo_projen.isnot(None)).all()
+            conteudos = [c[0] for c in conteudos if c[0]]
+            
+            projetos = projetos.order_by(Projen.id_projen.desc()).all()
+            
+            return render_template('projetos.html',
+                                projetos=projetos,
+                                locais=locais,
+                                setores=setores,
+                                assuntos=assuntos,
+                                executores=executores,
+                                autores=autores,
+                                conteudos=conteudos,
+                                filtros=filtros,
+                                datetime=datetime)
 
 @app.route('/api/autores')
 def get_autores():
