@@ -22,7 +22,6 @@ def index():
     return render_template('index.html', total_projetos=total_projetos)
 
 @app.route('/projetos', methods=['GET', 'POST'])
-@app.route('/projetos', methods=['GET', 'POST'])
 def listar_projetos():
     """Lista projetos com filtros"""
     projetos = Projen.query
@@ -201,29 +200,29 @@ def listar_projetos():
             
             filtros['titulo'] = titulo_busca
             
-            # Buscar dados para os selects
-            locais = Local.query.order_by(Local.nome_local).all()
-            setores = Setor.query.order_by(Setor.nome_setor).all()
-            assuntos = Assunto.query.order_by(Assunto.nome_assunto).all()
-            executores = Executor.query.order_by(Executor.nome_executor).all()
-            autores = Autor.query.order_by(Autor.nome_autor).all()
+    # Buscar dados para os selects
+    locais = Local.query.order_by(Local.nome_local).all()
+    setores = Setor.query.order_by(Setor.nome_setor).all()
+    assuntos = Assunto.query.order_by(Assunto.nome_assunto).all()
+    executores = Executor.query.order_by(Executor.nome_executor).all()
+    autores = Autor.query.order_by(Autor.nome_autor).all()
+    
+    # Buscar conteúdos distintos
+    conteudos = db.session.query(Projen.conteudo_projen).distinct().filter(Projen.conteudo_projen.isnot(None)).all()
+    conteudos = [c[0] for c in conteudos if c[0]]
+    
+    projetos = projetos.order_by(Projen.id_projen.desc()).all()
             
-            # Buscar conteúdos distintos
-            conteudos = db.session.query(Projen.conteudo_projen).distinct().filter(Projen.conteudo_projen.isnot(None)).all()
-            conteudos = [c[0] for c in conteudos if c[0]]
-            
-            projetos = projetos.order_by(Projen.id_projen.desc()).all()
-            
-            return render_template('projetos.html',
-                                projetos=projetos,
-                                locais=locais,
-                                setores=setores,
-                                assuntos=assuntos,
-                                executores=executores,
-                                autores=autores,
-                                conteudos=conteudos,
-                                filtros=filtros,
-                                datetime=datetime)
+    return render_template('projetos.html',
+                            projetos=projetos,
+                            locais=locais,
+                            setores=setores,
+                            assuntos=assuntos,
+                            executores=executores,
+                            autores=autores,
+                            conteudos=conteudos,
+                            filtros=filtros,
+                            datetime=datetime)
 
 @app.route('/api/autores')
 def get_autores():
