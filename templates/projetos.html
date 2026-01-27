@@ -46,7 +46,7 @@
                             <option value="{{ autor.id_autor }}" 
                                     data-tipo="{{ autor.tipo_autor }}"
                                     {% if filtros.get('autor_id')|string == autor.id_autor|string %}selected{% endif %}>
-                                {{ autor.nome_autor }} ({{ autor.tipo_autor }})
+                                {{ autor.nome_autor }}
                             </option>
                             {% endfor %}
                         </select>
