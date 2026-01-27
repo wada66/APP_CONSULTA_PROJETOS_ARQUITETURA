@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 class Config:
+    
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'projen-consulta-2024-secret-key'
     
     # String de conexão COM pg8000

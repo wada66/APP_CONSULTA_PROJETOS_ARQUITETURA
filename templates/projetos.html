@@ -26,7 +26,14 @@
                            placeholder="Número de chamada">
                 </div>
                 
-                <!-- Linha 2 - Autor -->
+                <!-- Linha 2 - Título do Projeto e Autor -->
+                <div class="filtro-group full-width">
+                    <label>Título do Projeto:</label>
+                    <input type="text" name="titulo" value="{{ filtros.get('titulo', '') }}" 
+                        placeholder="Digite palavras do título..." style="width: 100%;">
+                </div>
+
+                <!-- No filtro de Autor -->
                 <div class="filtro-group">
                     <label>Autor:</label>
                     <select name="autor_id" class="select2-autor">
@@ -38,10 +45,18 @@
                         </option>
                         {% endfor %}
                     </select>
+                    
+                    <!-- Select de tipo de autor -->
                     <select name="autor_tipo">
-                        <option value="todos" {% if filtros.get('autor_tipo') == 'todos' %}selected{% endif %}>Todos os tipos</option>
-                        <option value="primario" {% if filtros.get('autor_tipo') == 'primario' %}selected{% endif %}>Apenas Primário</option>
-                        <option value="secundario" {% if filtros.get('autor_tipo') == 'secundario' %}selected{% endif %}>Apenas Secundário</option>
+                        <option value="todos" {% if filtros.get('autor_tipo', 'todos') == 'todos' %}selected{% endif %}>
+                            Todos os tipos
+                        </option>
+                        <option value="primario" {% if filtros.get('autor_tipo') == 'primario' %}selected{% endif %}>
+                            Apenas Primário
+                        </option>
+                        <option value="secundario" {% if filtros.get('autor_tipo') == 'secundario' %}selected{% endif %}>
+                            Apenas Secundário
+                        </option>
                     </select>
                 </div>
                 

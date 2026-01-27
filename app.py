@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, jsonify
 from config import Config
-from models import db, Projen, Setor, Local, Assunto, Executor, Autor, AreaGeografica
+from models import ProjenAutor, db, Projen, Setor, Local, Assunto, Executor, Autor, AreaGeografica
 from datetime import datetime
 from sqlalchemy import or_, extract
 from datetime import datetime  # ← Esta importação já deve existir
@@ -43,20 +43,64 @@ def listar_projetos():
         projetos = projetos.filter(Projen.n_chamada_projen.like(f"%{request.args['n_chamada']}%"))
         filtros['n_chamada'] = request.args['n_chamada']
     
-    # Filtro por Autor
+    # Filtro por Autor - VERSÃO 100% FUNCIONAL
     if 'autor_id' in request.args and request.args['autor_id']:
         try:
             autor_id_int = int(request.args['autor_id'])
             autor_tipo = request.args.get('autor_tipo', 'todos')
             
-            projetos = projetos.join(Projen.autores).filter(Autor.id_autor == autor_id_int)
+            print(f"\n🎯 FILTRO AUTOR ATIVADO")
+            print(f"   Autor ID: {autor_id_int}")
+            print(f"   Tipo solicitado: '{autor_tipo}'")
             
-            if autor_tipo != 'todos':
-                projetos = projetos.filter(Autor.tipo_autor == autor_tipo)
+            # DEBUG: Verificar o autor
+            autor = Autor.query.get(autor_id_int)
+            if autor:
+                print(f"   Autor encontrado: {autor.nome_autor}")
+                print(f"   Tipo deste autor: '{autor.tipo_autor}'")
+            
+            # IMPORTANTE: Quando fazemos JOIN, estamos trazendo TODOS os autores do projeto
+            # Se um projeto tem 3 autores, o JOIN cria 3 linhas
+            # Precisamos de uma abordagem diferente
+            
+            if autor_tipo == 'todos':
+                # Método SIMPLES e FUNCIONAL: subquery
+                subquery = db.session.query(ProjenAutor.projen_id).filter(
+                    ProjenAutor.autor_id == autor_id_int
+                )
+                projetos = projetos.filter(Projen.id_projen.in_(subquery))
+                print(f"   ✅ Buscando TODOS projetos do autor {autor_id_int}")
+                
+            else:
+                # Método CORRETO para filtrar por tipo
+                # 1. Primeiro, pega todos projetos do autor
+                # 2. Depois filtra pelos que o autor tem o tipo específico
+                
+                # Verificar se este autor TEM o tipo solicitado
+                autor_com_tipo = Autor.query.filter(
+                    Autor.id_autor == autor_id_int,
+                    Autor.tipo_autor == autor_tipo
+                ).first()
+                
+                if autor_com_tipo:
+                    # Autor existe e tem este tipo, buscar seus projetos
+                    subquery = db.session.query(ProjenAutor.projen_id).filter(
+                        ProjenAutor.autor_id == autor_id_int
+                    )
+                    projetos = projetos.filter(Projen.id_projen.in_(subquery))
+                    print(f"   ✅ Autor {autor_id_int} é '{autor_tipo}', buscando seus projetos")
+                else:
+                    # Autor não tem este tipo, não retorna nada
+                    print(f"   ⚠️  Autor {autor_id_int} não é '{autor_tipo}', retornando vazio")
+                    projetos = projetos.filter(False)  # Força resultado vazio
             
             filtros['autor_id'] = request.args['autor_id']
             filtros['autor_tipo'] = autor_tipo
-        except ValueError:
+            
+            print(f"   📊 Query final montada")
+            
+        except ValueError as e:
+            print(f"   ❌ Erro no ID do autor: {e}")
             pass
     
     # Filtro por Local
@@ -119,6 +163,15 @@ def listar_projetos():
             filtros['setor_id'] = request.args['setor_id']
         except ValueError:
             pass
+        
+        # Filtro por Título do Projeto (NOVO!)
+    if 'titulo' in request.args and request.args['titulo']:
+        titulo = request.args['titulo'].strip()
+        if titulo:  # Só aplica se não estiver vazio
+            # Busca por LIKE (contém) no título
+            projetos = projetos.filter(Projen.titulo_projen.like(f"%{titulo}%"))
+            filtros['titulo'] = titulo
+            print(f"🔍 Buscando por título contendo: '{titulo}'")
     
     # Buscar dados para os selects
     locais = Local.query.order_by(Local.nome_local).all()
@@ -160,7 +213,8 @@ def get_conteudos():
     conteudos = db.session.query(Projen.conteudo_projen).distinct().filter(Projen.conteudo_projen.isnot(None)).all()
     return jsonify([c[0] for c in conteudos if c[0]])
 
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
