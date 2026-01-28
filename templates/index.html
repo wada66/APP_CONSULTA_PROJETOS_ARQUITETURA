@@ -16,9 +16,7 @@
                 <a href="{{ url_for('listar_projetos') }}" class="btn btn-primary-custom btn-lg">
                     <i class="fas fa-search me-2"></i> Consultar Projetos
                 </a>
-                <a href="#" class="btn btn-outline-primary btn-lg">
-                    <i class="fas fa-chart-line me-2"></i> Ver Estatísticas
-                </a>
+            
             </div>
         </div>
         <div class="col-lg-6">
@@ -31,12 +29,12 @@
     </div>
 
     <!-- Estatísticas -->
-    <div class="row mb-5">
+    <div class="row mb-5 justify-content-center">
         <div class="col-12">
-            <h2 class="mb-4 text-center">📊 Visão Geral do Sistema</h2>
+            <h2 class="mb-4 text-center">Visão Geral do Sistema</h2>
         </div>
         
-        <div class="col-md-3 mb-4">
+        <div class="col-6">
             <div class="stats-card">
                 <div class="stats-number">{{ total_projetos }}</div>
                 <div class="stats-label">Projetos Cadastrados</div>
@@ -44,64 +42,38 @@
             </div>
         </div>
         
-        <div class="col-md-3 mb-4">
+        <div class="col-6">
             <div class="stats-card">
-                <div class="stats-number">{{ autores_total if autores_total else '150+' }}</div>
+                <div class="stats-number">{{ autores_total if autores_total else '17' }}</div>
                 <div class="stats-label">Autores</div>
                 <i class="fas fa-users text-primary mt-3" style="font-size: 2rem;"></i>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-4">
-            <div class="stats-card">
-                <div class="stats-number">{{ locais_total if locais_total else '50+' }}</div>
-                <div class="stats-label">Locais Diferentes</div>
-                <i class="fas fa-map-marker-alt text-primary mt-3" style="font-size: 2rem;"></i>
-            </div>
-        </div>
-        
-        <div class="col-md-3 mb-4">
-            <div class="stats-card">
-                <div class="stats-number">{{ setores_total if setores_total else '20+' }}</div>
-                <div class="stats-label">Setores</div>
-                <i class="fas fa-building text-primary mt-3" style="font-size: 2rem;"></i>
             </div>
         </div>
     </div>
 
     <!-- Funcionalidades -->
-    <div class="row mb-5">
+    <div class="row mb-5 justify-content-center">
         <div class="col-12">
-            <h2 class="mb-4 text-center">🚀 Funcionalidades Principais</h2>
+            <h2 class="mb-4 text-center">Funcionalidades Principais</h2>
         </div>
         
-        <div class="col-md-4 mb-4">
-            <div class="card-modern p-4 text-center h-100">
+        <div class="col-6">
+            <div class="card-modern p-4 text-center h-90">
                 <div class="mb-3">
-                    <i class="fas fa-filter text-primary" style="font-size: 3rem;"></i>
+                    <i class="fas fa-filter text-primary mt-3" style="font-size: 2rem;"></i>
                 </div>
                 <h4>Filtros Avançados</h4>
                 <p>Busque por título, autor, local, data, conteúdo e muito mais com filtros combinados.</p>
             </div>
         </div>
         
-        <div class="col-md-4 mb-4">
-            <div class="card-modern p-4 text-center h-100">
+        <div class="col-6">
+            <div class="card-modern p-4 text-center h-90">
                 <div class="mb-3">
-                    <i class="fas fa-search text-primary" style="font-size: 3rem;"></i>
+                    <i class="fas fa-search text-primary mt-3" style="font-size: 2rem;"></i>
                 </div>
                 <h4>Busca Inteligente</h4>
                 <p>Encontre projetos mesmo digitando sem acentos ou com maiúsculas/minúsculas diferentes.</p>
-            </div>
-        </div>
-        
-        <div class="col-md-4 mb-4">
-            <div class="card-modern p-4 text-center h-100">
-                <div class="mb-3">
-                    <i class="fas fa-chart-pie text-primary" style="font-size: 3rem;"></i>
-                </div>
-                <h4>Análise de Dados</h4>
-                <p>Visualize estatísticas e tendências dos seus projetos de engenharia.</p>
             </div>
         </div>
     </div>
