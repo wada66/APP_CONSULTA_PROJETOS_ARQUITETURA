@@ -1,10 +1,9 @@
 import re
 from flask import Flask, render_template, request, jsonify
 from config import Config
-from models import ProjenAutor, db, Projen, Setor, Local, Assunto, Executor, Autor, AreaGeografica
+from models import ProjarAutor, db, Projar, Setor, Local, Assunto, Executor, Autor, AreaGeografica
 from datetime import datetime
 from sqlalchemy import or_, extract
-from datetime import datetime  # ← Esta importação já deve existir
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -12,83 +11,69 @@ db.init_app(app)
 
 @app.route('/')
 def index():
-    """Página inicial minimalista"""
-    # Passar o contador de projetos para o template
+    """Página inicial"""
     try:
-        total_projetos = Projen.query.count()
+        total_projetos = Projar.query.count()
     except Exception:
-        total_projetos = 0  # Se ainda não houver tabelas
+        total_projetos = 0
     
     return render_template('index.html', total_projetos=total_projetos)
 
 @app.route('/projetos', methods=['GET', 'POST'])
 def listar_projetos():
     """Lista projetos com filtros"""
-    projetos = Projen.query
+    projetos = Projar.query
     
     # Aplicar filtros
     filtros = {}
     
     # Filtro por ID
-    if 'id_projen' in request.args and request.args['id_projen']:
+    if 'id_projar' in request.args and request.args['id_projar']:
         try:
-            id_val = int(request.args['id_projen'])
-            projetos = projetos.filter(Projen.id_projen == id_val)
-            filtros['id_projen'] = request.args['id_projen']
+            id_val = int(request.args['id_projar'])
+            projetos = projetos.filter(Projar.id_projar == id_val)
+            filtros['id_projar'] = request.args['id_projar']
         except ValueError:
             pass
     
     # Filtro por Número de Chamada
     if 'n_chamada' in request.args and request.args['n_chamada']:
-        projetos = projetos.filter(Projen.n_chamada_projen.like(f"%{request.args['n_chamada']}%"))
+        projetos = projetos.filter(Projar.n_chamada_projar.like(f"%{request.args['n_chamada']}%"))
         filtros['n_chamada'] = request.args['n_chamada']
     
-    # Filtro por Autor - VERSÃO CORRIGIDA E FUNCIONAL
+    # Filtro por Autor
     if 'autor_id' in request.args and request.args['autor_id']:
         try:
             autor_id_int = int(request.args['autor_id'])
             autor_tipo = request.args.get('autor_tipo', 'todos')
             
-            print(f"\n🎯 FILTRO AUTOR ATIVADO")
-            print(f"   Autor ID: {autor_id_int}")
-            print(f"   Tipo: '{autor_tipo}'")
+            # Sempre usar subquery para evitar duplicação
+            subquery = db.session.query(ProjarAutor.projar_id).filter(
+                ProjarAutor.autor_id == autor_id_int
+            )
             
-            # Buscar o autor para verificar se existe
-            autor = Autor.query.get(autor_id_int)
-            if not autor:
-                print(f"   ❌ Autor não encontrado")
-            else:
-                print(f"   ✅ Autor: {autor.nome_autor}")
-                
-                # SEMPRE usar subquery para evitar duplicação de resultados
-                subquery = db.session.query(ProjenAutor.projen_id).filter(
-                    ProjenAutor.autor_id == autor_id_int
-                )
-                
-                # Se for filtrar por tipo específico
-                if autor_tipo != 'todos':
-                    # JOIN para garantir que o autor tenha o tipo correto
-                    subquery = subquery.join(
-                        Autor, ProjenAutor.autor_id == Autor.id_autor
-                    ).filter(Autor.tipo_autor == autor_tipo)
-                
-                # Aplicar o filtro
-                projetos = projetos.filter(Projen.id_projen.in_(subquery))
-                print(f"   📊 Query aplicada com sucesso")
+            # Se for filtrar por tipo específico
+            if autor_tipo != 'todos':
+                # JOIN para garantir que o autor tenha o tipo correto
+                subquery = subquery.join(
+                    Autor, ProjarAutor.autor_id == Autor.id_autor
+                ).filter(Autor.tipo_autor == autor_tipo)
+            
+            # Aplicar o filtro
+            projetos = projetos.filter(Projar.id_projar.in_(subquery))
             
             filtros['autor_id'] = request.args['autor_id']
             if autor_tipo != 'todos':
                 filtros['autor_tipo'] = autor_tipo
                 
-        except ValueError as e:
-            print(f"❌ Erro no ID do autor: {e}")
+        except ValueError:
             pass
     
     # Filtro por Local
     if 'local_id' in request.args and request.args['local_id']:
         try:
             local_id_int = int(request.args['local_id'])
-            projetos = projetos.filter(Projen.local_id == local_id_int)
+            projetos = projetos.filter(Projar.local_id == local_id_int)
             filtros['local_id'] = request.args['local_id']
         except ValueError:
             pass
@@ -102,27 +87,27 @@ def listar_projetos():
             if ano.isdigit():
                 ano_int = int(ano)
                 projetos = projetos.filter(
-                    extract('month', Projen.data_projen) == mes_int,
-                    extract('year', Projen.data_projen) == ano_int
+                    extract('month', Projar.data_projar) == mes_int,
+                    extract('year', Projar.data_projar) == ano_int
                 )
                 filtros['mes'] = mes
                 filtros['ano'] = ano
             else:
                 # Apenas mês
-                projetos = projetos.filter(extract('month', Projen.data_projen) == mes_int)
+                projetos = projetos.filter(extract('month', Projar.data_projar) == mes_int)
                 filtros['mes'] = mes
     
     # Filtro por Conteúdo
     if 'conteudo' in request.args and request.args['conteudo']:
         conteudo = request.args['conteudo']
-        projetos = projetos.filter(Projen.conteudo_projen.like(f"%{conteudo}%"))
+        projetos = projetos.filter(Projar.conteudo_projar.like(f"%{conteudo}%"))
         filtros['conteudo'] = conteudo
     
     # Filtro por Executor
     if 'executor_id' in request.args and request.args['executor_id']:
         try:
             executor_id_int = int(request.args['executor_id'])
-            projetos = projetos.join(Projen.executores).filter(Executor.id_executor == executor_id_int)
+            projetos = projetos.join(Projar.executores).filter(Executor.id_executor == executor_id_int)
             filtros['executor_id'] = request.args['executor_id']
         except ValueError:
             pass
@@ -131,7 +116,7 @@ def listar_projetos():
     if 'assunto_id' in request.args and request.args['assunto_id']:
         try:
             assunto_id_int = int(request.args['assunto_id'])
-            projetos = projetos.join(Projen.assuntos).filter(Assunto.id_assunto == assunto_id_int)
+            projetos = projetos.join(Projar.assuntos).filter(Assunto.id_assunto == assunto_id_int)
             filtros['assunto_id'] = request.args['assunto_id']
         except ValueError:
             pass
@@ -140,21 +125,16 @@ def listar_projetos():
     if 'setor_id' in request.args and request.args['setor_id']:
         try:
             setor_id_int = int(request.args['setor_id'])
-            projetos = projetos.filter(Projen.setor_id == setor_id_int)
+            projetos = projetos.filter(Projar.setor_id == setor_id_int)
             filtros['setor_id'] = request.args['setor_id']
         except ValueError:
             pass
         
-    # Filtro por Título - SOLUÇÃO SIMPLES E FUNCIONAL
+    # Filtro por Título
     if 'titulo' in request.args and request.args['titulo']:
         titulo_busca = request.args['titulo'].strip()
         if titulo_busca:
-            print(f"\n🔍 BUSCANDO: '{titulo_busca}'")
-            
             # Método: buscar de forma "aproximada"
-            # Vamos transformar a busca em um padrão de regex-like
-            
-            # Primeiro, criar um padrão onde cada vogal pode ter acento
             def criar_padrao_regex(palavra):
                 """Cria padrão regex onde vogais podem ter acentos"""
                 padrao = ''
@@ -187,19 +167,17 @@ def listar_projetos():
                     
                     # Usar regex do PostgreSQL se disponível
                     try:
-                        condicoes.append(Projen.titulo_projen.op('~*')(padrao_regex))
-                        print(f"   ✅ Usando regex para: {palavra} → {padrao_regex}")
+                        condicoes.append(Projar.titulo_projar.op('~*')(padrao_regex))
                     except:
                         # Fallback: usar LIKE tradicional
-                        condicoes.append(Projen.titulo_projen.ilike(f"%{palavra}%"))
-                        print(f"   ⚠️  Fallback LIKE para: {palavra}")
+                        condicoes.append(Projar.titulo_projar.ilike(f"%{palavra}%"))
             
             # Aplicar condições AND (todas palavras devem aparecer)
             if condicoes:
                 projetos = projetos.filter(*condicoes)
             
             filtros['titulo'] = titulo_busca
-            
+    
     # Buscar dados para os selects
     locais = Local.query.order_by(Local.nome_local).all()
     setores = Setor.query.order_by(Setor.nome_setor).all()
@@ -208,10 +186,10 @@ def listar_projetos():
     autores = Autor.query.order_by(Autor.nome_autor).all()
     
     # Buscar conteúdos distintos
-    conteudos = db.session.query(Projen.conteudo_projen).distinct().filter(Projen.conteudo_projen.isnot(None)).all()
+    conteudos = db.session.query(Projar.conteudo_projar).distinct().filter(Projar.conteudo_projar.isnot(None)).all()
     conteudos = [c[0] for c in conteudos if c[0]]
     
-    projetos = projetos.order_by(Projen.id_projen.desc()).all()
+    projetos = projetos.order_by(Projar.id_projar.desc()).all()
             
     return render_template('projetos.html',
                             projetos=projetos,
@@ -226,7 +204,7 @@ def listar_projetos():
 
 @app.route('/api/autores')
 def get_autores():
-    """API para buscar autores (usado para select2 ou similar)"""
+    """API para buscar autores"""
     autores = Autor.query.order_by(Autor.nome_autor).all()
     return jsonify([{
         'id': a.id_autor,
@@ -237,7 +215,7 @@ def get_autores():
 @app.route('/api/conteudos')
 def get_conteudos():
     """API para buscar conteúdos distintos"""
-    conteudos = db.session.query(Projen.conteudo_projen).distinct().filter(Projen.conteudo_projen.isnot(None)).all()
+    conteudos = db.session.query(Projar.conteudo_projar).distinct().filter(Projar.conteudo_projar.isnot(None)).all()
     return jsonify([c[0] for c in conteudos if c[0]])
 
 
