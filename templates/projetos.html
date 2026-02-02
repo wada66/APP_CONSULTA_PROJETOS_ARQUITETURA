@@ -199,16 +199,19 @@
                             <!-- Assunto e Setor -->
                             <div class="col-md-6">
                                 <div class="filtro-group">
-                                    <label for="assunto_id"><i class="fas fa-tags"></i> Assunto</label>
-                                    <select name="assunto_id" class="form-control form-control-custom">
-                                        <option value="">Todos os assuntos...</option>
-                                        {% for assunto in assuntos %}
-                                        <option value="{{ assunto.id_assunto }}" 
-                                                {% if filtros.get('assunto_id')|string == assunto.id_assunto|string %}selected{% endif %}>
-                                            {{ assunto.nome_assunto }}
-                                        </option>
-                                        {% endfor %}
-                                    </select>
+                                    <label for="assunto">
+                                        <i class="fas fa-tags"></i> Assunto
+                                    </label>
+                                    <input type="text" 
+                                        class="form-control form-control-custom" 
+                                        id="assunto" 
+                                        name="assunto" 
+                                        value="{{ filtros.get('assunto', '') }}"
+                                        placeholder="Digite palavras do assunto..."
+                                        aria-label="Busca por assunto">
+                                    <small class="text-muted mt-1 d-block">
+                                        <i class="fas fa-search me-1"></i>Busca inteligente (ex: "ponte", "escola municipal")
+                                    </small>
                                 </div>
                             </div>
 

@@ -1,7 +1,7 @@
 import re
 from flask import Flask, render_template, request, jsonify
 from config import Config
-from models import ProjarAutor, db, Projar, Setor, Local, Assunto, Executor, Autor, AreaGeografica
+from models import ProjarAssunto, ProjarAutor, db, Projar, Setor, Local, Assunto, Executor, Autor, AreaGeografica
 from datetime import datetime
 from sqlalchemy import or_, extract
 
@@ -112,14 +112,73 @@ def listar_projetos():
         except ValueError:
             pass
     
-    # Filtro por Assunto
-    if 'assunto_id' in request.args and request.args['assunto_id']:
-        try:
-            assunto_id_int = int(request.args['assunto_id'])
-            projetos = projetos.join(Projar.assuntos).filter(Assunto.id_assunto == assunto_id_int)
-            filtros['assunto_id'] = request.args['assunto_id']
-        except ValueError:
-            pass
+     # Filtro por Assunto Inteligente
+    if 'assunto' in request.args and request.args['assunto']:
+        assunto_busca = request.args['assunto'].strip()
+        if assunto_busca:
+            print(f"\n🔍 BUSCA EM ASSUNTO: '{assunto_busca}'")
+            
+            # FUNÇÃO REPETIDA (igual à do título)
+            def criar_padrao_regex_assunto(palavra):
+                """Cria padrão regex onde vogais podem ter acentos"""
+                padrao = ''
+                for letra in palavra:
+                    letra_lower = letra.lower()
+                    if letra_lower == 'a':
+                        padrao += '[aáàãâä]'
+                    elif letra_lower == 'e':
+                        padrao += '[eéèêë]'
+                    elif letra_lower == 'i':
+                        padrao += '[iíìîï]'
+                    elif letra_lower == 'o':
+                        padrao += '[oóòõôö]'
+                    elif letra_lower == 'u':
+                        padrao += '[uúùûü]'
+                    elif letra_lower == 'c':
+                        padrao += '[cç]'
+                    else:
+                        padrao += re.escape(letra)
+                return padrao
+            
+            # Para cada palavra na busca, criar padrão
+            palavras = assunto_busca.split()
+            condicoes_assunto = []
+            
+            for palavra in palavras:
+                if len(palavra) >= 2:
+                    # Padrão case-insensitive com acentos
+                    padrao_regex = criar_padrao_regex_assunto(palavra)
+                    
+                    # Subquery: projetos que têm assuntos com essa palavra
+                    subquery = db.session.query(ProjarAssunto.projar_id)\
+                        .join(Assunto, ProjarAssunto.assunto_id == Assunto.id_assunto)
+                    
+                    # Aplicar regex ou LIKE no nome do assunto
+                    try:
+                        # Usar regex do PostgreSQL (case-insensitive, aceita acentos)
+                        subquery = subquery.filter(Assunto.nome_assunto.op('~*')(padrao_regex))
+                        print(f"   ✅ Assunto regex: '{palavra}' → '{padrao_regex}'")
+                    except Exception as e:
+                        # Fallback: usar LIKE tradicional
+                        print(f"   ⚠️  Regex falhou para '{palavra}', usando LIKE")
+                        subquery = subquery.filter(Assunto.nome_assunto.ilike(f"%{palavra}%"))
+                    
+                    # Adicionar condição: projeto deve estar na subquery
+                    condicoes_assunto.append(Projar.id_projar.in_(subquery))
+                else:
+                    # Se palavra tem menos de 2 caracteres, usar LIKE simples
+                    print(f"   ℹ️  Palavra muito curta '{palavra}' (<2 chars), usando LIKE")
+                    subquery = db.session.query(ProjarAssunto.projar_id)\
+                        .join(Assunto, ProjarAssunto.assunto_id == Assunto.id_assunto)\
+                        .filter(Assunto.nome_assunto.ilike(f"%{palavra}%"))
+                    condicoes_assunto.append(Projar.id_projar.in_(subquery))
+            
+            # Aplicar condições AND (todas palavras devem aparecer nos assuntos)
+            if condicoes_assunto:
+                projetos = projetos.filter(*condicoes_assunto)
+                print(f"   📊 Filtro aplicado: {len(condicoes_assunto)} condição(ões)")
+            
+            filtros['assunto'] = assunto_busca
     
     # Filtro por Setor
     if 'setor_id' in request.args and request.args['setor_id']:
